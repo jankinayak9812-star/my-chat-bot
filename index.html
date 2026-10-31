@@ -1,0 +1,934 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090b12">
+<title>Nexa AI — Smart Chatbot</title>
+
+<style>
+:root {
+  --bg:#090b12;
+  --side:#0e111a;
+  --panel:#141824;
+  --card:#191e2c;
+  --border:#292e40;
+  --text:#f4f5fb;
+  --muted:#9299af;
+  --accent:#9178ff;
+  --accent2:#6653df;
+  --user:#29243e;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.app{display:flex;height:100dvh;min-height:500px;overflow:hidden}
+.sidebar{
+  width:275px;flex-shrink:0;display:flex;flex-direction:column;
+  background:var(--side);border-right:1px solid var(--border);
+  padding:22px 15px 13px;
+}
+.brand{display:flex;align-items:center;gap:11px;padding:0 4px}
+.brand-logo,.welcome-logo{
+  display:grid;place-items:center;color:white;
+  background:linear-gradient(135deg,#b6a3ff,#6650e5);
+  box-shadow:0 5px 28px #7861ff30;
+}
+.brand-logo{width:43px;height:43px;border-radius:14px;font-size:25px}
+.brand h2{font-size:17px;margin:0 0 4px}
+.brand p{font-size:11px;color:var(--muted);margin:0}
+.new-chat{
+  margin:29px 0 24px;padding:13px;
+  border:1px solid #9a88ff55;border-radius:11px;
+  color:white;background:linear-gradient(120deg,#806bf0,#6350dc);
+  font-weight:650;
+}
+.new-chat:hover,.send-btn:hover{filter:brightness(1.12)}
+.section-label{
+  color:var(--muted);font-size:10px;font-weight:700;
+  letter-spacing:1.5px;margin:0 0 12px 5px;
+}
+.history{flex:1;overflow-y:auto}
+.history-item{
+  width:100%;display:block;text-align:left;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;padding:11px;
+  margin-bottom:5px;background:transparent;color:var(--muted);
+  border:1px solid transparent;border-radius:9px;font-size:12px;
+}
+.history-item:hover,.history-item.active{
+  background:var(--card);border-color:var(--border);color:var(--text);
+}
+.sidebar-bottom{
+  border-top:1px solid var(--border);padding-top:13px;
+  display:flex;align-items:center;gap:9px;
+}
+.avatar{
+  width:36px;height:36px;border-radius:50%;display:grid;
+  place-items:center;background:#38304f;color:#d2c7ff;font-weight:700;
+}
+.user-info{flex:1;display:flex;flex-direction:column;gap:4px}
+.user-info strong{font-size:12px}
+.user-info small{font-size:10px;color:var(--muted)}
+.icon-btn{
+  display:grid;place-items:center;width:36px;height:36px;
+  color:var(--muted);background:transparent;
+  border:1px solid transparent;border-radius:9px;font-size:17px;
+}
+.icon-btn:hover{background:var(--card);color:var(--text)}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  height:65px;flex-shrink:0;display:flex;align-items:center;
+  justify-content:space-between;padding:0 24px;
+  border-bottom:1px solid var(--border);
+}
+.connection{display:flex;align-items:center;gap:9px;font-size:13px}
+.dot{width:7px;height:7px;border-radius:50%;background:#45d9a0}
+.badge{
+  padding:5px 8px;font-size:10px;color:#c4b6ff;
+  background:#9178ff18;border:1px solid #9178ff40;border-radius:6px;
+}
+.top-actions{display:flex;align-items:center;gap:7px}
+.mobile-menu{display:none}
+.chat-area{
+  flex:1;min-height:0;overflow-y:auto;
+  padding:25px 18px;scroll-behavior:smooth;
+}
+.welcome{max-width:690px;margin:5vh auto 35px;text-align:center}
+.welcome-logo{
+  width:65px;height:65px;margin:0 auto 20px;
+  border-radius:21px;font-size:35px;
+}
+.eyebrow{font-size:10px;font-weight:750;letter-spacing:2.5px;color:#b3a1ff}
+.welcome h1{font-size:clamp(32px,4vw,47px);line-height:1.16;letter-spacing:-1.5px;margin:17px 0}
+.welcome h1 span{
+  background:linear-gradient(90deg,#bcaaff,#8194ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.welcome-desc{font-size:13px;line-height:1.8;color:var(--muted)}
+.suggestions{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;margin-top:32px;text-align:left;
+}
+.suggestion{
+  display:grid;grid-template-columns:30px 1fr;
+  grid-template-rows:auto auto;align-items:center;gap:5px 9px;
+  padding:15px;background:var(--panel);color:var(--text);
+  border:1px solid var(--border);border-radius:13px;
+  transition:.2s;
+}
+.suggestion:hover{border-color:var(--accent);transform:translateY(-2px)}
+.suggestion span{grid-row:1/3;color:#b5a3ff;font-size:23px}
+.suggestion strong{font-size:12px}
+.suggestion small{font-size:10px;line-height:1.5;color:var(--muted)}
+.messages{width:100%;max-width:800px;margin:0 auto}
+.message{display:flex;align-items:flex-start;gap:11px;margin:23px 0}
+.message.user{flex-direction:row-reverse}
+.message-avatar{
+  width:33px;height:33px;flex-shrink:0;display:grid;place-items:center;
+  border-radius:11px;background:#252a3b;color:#c4b7ff;
+}
+.message.user .message-avatar{background:#3a3052}
+.message-content{min-width:0;max-width:calc(100% - 44px)}
+.message-name{font-size:11px;color:var(--muted);margin:2px 0 8px}
+.message.user .message-name{text-align:right}
+.bubble{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:4px 15px 15px 15px;padding:13px 16px;
+  font-size:13px;line-height:1.8;overflow-wrap:anywhere;
+}
+.message.user .bubble{
+  background:var(--user);border-color:#51456e;
+  border-radius:15px 4px 15px 15px;white-space:pre-wrap;
+}
+.bubble p{margin:0 0 10px}
+.bubble p:last-child{margin-bottom:0}
+.bubble pre{
+  white-space:pre;overflow-x:auto;background:#080a10;
+  color:#f5f5fa;padding:13px;border-radius:8px;
+}
+.bubble code{font-family:Consolas,monospace}
+.bubble pre code{font-size:12px}
+.bubble a{color:#bbaaff}
+.bubble ul{padding-left:22px}
+.message-actions{display:flex;gap:7px;margin-top:7px}
+.message-actions button{
+  padding:5px 9px;font-size:10px;background:var(--panel);
+  color:var(--muted);border:1px solid var(--border);border-radius:7px;
+}
+.message-actions button:hover{color:var(--text)}
+.typing{color:var(--muted);animation:pulse 1s infinite alternate}
+@keyframes pulse{to{opacity:.4}}
+.composer-area{padding:8px 18px 12px}
+.composer{
+  max-width:800px;margin:0 auto;padding:12px 13px 10px 16px;
+  background:var(--panel);border:1px solid #373b50;
+  border-radius:17px;box-shadow:0 12px 40px #0002;
+}
+.composer:focus-within{border-color:var(--accent)}
+.composer textarea{
+  display:block;width:100%;min-height:31px;max-height:150px;
+  resize:none;outline:none;border:0;background:transparent;
+  color:var(--text);font-size:13px;line-height:1.6;
+}
+.composer textarea::placeholder{color:#858ba1}
+.composer-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hint{font-size:10px;color:var(--muted)}
+.send-btn{
+  width:36px;height:36px;border:0;border-radius:11px;
+  color:white;background:linear-gradient(135deg,#aa98ff,#6a53e6);font-size:24px;
+}
+.disclaimer{text-align:center;color:var(--muted);font-size:10px;margin:10px auto 0}
+[hidden]{display:none!important}
+
+/* Settings modal */
+.modal-backdrop{
+  position:fixed;inset:0;z-index:20;background:#0009;
+  display:grid;place-items:center;padding:18px;
+}
+.modal{
+  width:min(470px,100%);max-height:90dvh;overflow-y:auto;
+  padding:22px;background:var(--panel);border:1px solid var(--border);
+  border-radius:18px;box-shadow:0 25px 80px #0005;
+}
+.modal-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.modal h2{font-size:19px;margin:0}
+.modal p{color:var(--muted);font-size:12px;line-height:1.7}
+.field-label{display:block;font-size:12px;font-weight:650;margin:16px 0 8px}
+.field,.model-select,.system-prompt{
+  width:100%;padding:12px;color:var(--text);background:var(--bg);
+  border:1px solid var(--border);border-radius:10px;outline:none;
+}
+.field:focus,.model-select:focus,.system-prompt:focus{border-color:var(--accent)}
+.key-row{display:flex;gap:8px}
+.key-row .field{flex:1;min-width:0}
+.secondary-btn,.primary-btn{
+  border:1px solid var(--border);border-radius:9px;
+  padding:10px 12px;background:var(--card);color:var(--text);font-size:12px;
+}
+.primary-btn{background:var(--accent2);border-color:transparent;color:white;font-weight:650}
+.modal-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.status-text{font-size:12px;color:var(--muted);min-height:20px;margin-top:10px}
+.security-note{
+  padding:11px;background:#d9a53b10;border:1px solid #d9a53b40;
+  border-radius:9px;color:#e7c47a!important;font-size:11px!important;
+}
+.model-info{font-size:11px!important;margin-top:7px}
+body.light{
+  color-scheme:light;--bg:#f6f7fc;--side:#fff;--panel:#fff;
+  --card:#f0f1f8;--border:#e0e3ed;--text:#25243a;
+  --muted:#73778e;--user:#efebff;
+}
+body.light .topbar{background:var(--bg)}
+body.light .bubble pre{background:#20202d}
+body.light .message-avatar{background:#efebff;color:#6651d1}
+body.light .message.user .message-avatar{background:#e3dcff}
+
+@media(max-width:700px){
+  .sidebar{
+    position:fixed;inset:0 auto 0 0;z-index:10;
+    transform:translateX(-105%);transition:transform .25s;
+    box-shadow:0 0 45px #0006;
+  }
+  .sidebar.open{transform:translateX(0)}
+  .mobile-menu{display:grid}
+  .topbar{height:58px;padding:0 11px}
+  .chat-area{padding:15px 11px}
+  .welcome{margin-top:4vh}
+  .welcome h1{font-size:34px}
+  .suggestions{gap:8px;margin-top:23px}
+  .suggestion{padding:11px 8px;grid-template-columns:23px 1fr;gap:5px}
+  .suggestion span{font-size:19px}
+  .suggestion strong{font-size:11px}
+  .suggestion small{font-size:9px}
+  .composer-area{padding:8px 9px 10px}
+  .message{gap:8px}
+  .message-avatar{width:29px;height:29px}
+  .bubble{padding:11px 12px;font-size:12px}
+  .hint{font-size:9px}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">✦</div>
+      <div><h2>Nexa AI</h2><p>Your personal AI assistant</p></div>
+    </div>
+
+    <button class="new-chat" id="newChat">＋ New conversation</button>
+    <div class="section-label">CHAT HISTORY</div>
+    <div class="history" id="history"></div>
+
+    <div class="sidebar-bottom">
+      <div class="avatar">N</div>
+      <div class="user-info"><strong>Guest User</strong><small>AI Workspace</small></div>
+      <button class="icon-btn" id="clearChats" title="Clear history">⌫</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn mobile-menu" id="menuBtn" aria-label="Open menu">☰</button>
+      <div class="connection">
+        <span class="dot"></span><span>AI Assistant</span>
+        <span class="badge" id="activeModelBadge">Llama 3.3 70B</span>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="settingsBtn" title="API settings" aria-label="API settings">⚙</button>
+        <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">☼</button>
+      </div>
+    </header>
+
+    <section class="chat-area" id="chatArea">
+      <div class="welcome" id="welcome">
+        <div class="welcome-logo">✦</div>
+        <div class="eyebrow">YOUR AI WORKSPACE</div>
+        <h1>What can I help<br><span>you with today?</span></h1>
+        <p class="welcome-desc">Ask questions, write code, explore ideas, and learn new things.</p>
+        <div class="suggestions">
+          <button class="suggestion" data-prompt="Explain artificial intelligence in simple words.">
+            <span>✧</span><strong>Learn something</strong><small>Understand complex topics</small>
+          </button>
+          <button class="suggestion" data-prompt="Give me five creative website project ideas.">
+            <span>◈</span><strong>Get creative</strong><small>Explore new ideas</small>
+          </button>
+          <button class="suggestion" data-prompt="Write a JavaScript calculator with a complete explanation.">
+            <span>⌘</span><strong>Write code</strong><small>Build your next project</small>
+          </button>
+          <button class="suggestion" data-prompt="Help me make a productive daily study plan.">
+            <span>◎</span><strong>Make a plan</strong><small>Organize your day</small>
+          </button>
+        </div>
+      </div>
+      <div class="messages" id="messages" aria-live="polite"></div>
+    </section>
+
+    <footer class="composer-area">
+      <form class="composer" id="chatForm">
+        <textarea id="messageInput" rows="1" maxlength="6000"
+          placeholder="Message Nexa AI..." aria-label="Message Nexa AI" required></textarea>
+        <div class="composer-bottom">
+          <span class="hint">Enter to send · Shift + Enter for a new line</span>
+          <button class="send-btn" id="sendBtn" type="submit" aria-label="Send message">↑</button>
+        </div>
+      </form>
+      <p class="disclaimer">AI responses can be inaccurate. Verify important information.</p>
+    </footer>
+  </main>
+</div>
+
+<!-- Settings -->
+<div class="modal-backdrop" id="settingsModal" hidden>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-header">
+      <h2 id="settingsTitle">⚙ AI Settings</h2>
+      <button class="icon-btn" id="closeSettings" aria-label="Close settings">✕</button>
+    </div>
+
+    <p>Connect your Groq API key and choose a supported model.</p>
+
+    <label class="field-label" for="apiKey">Groq API Key</label>
+    <div class="key-row">
+      <input class="field" id="apiKey" type="password"
+        placeholder="gsk_..." autocomplete="off" spellcheck="false">
+      <button class="secondary-btn" id="toggleKey" type="button">Show</button>
+    </div>
+
+    <label class="field-label" for="modelSelect">Choose model</label>
+    <select class="model-select" id="modelSelect">
+      <optgroup label="OpenAI GPT-OSS (on Groq)">
+        <option value="openai/gpt-oss-120b">GPT-OSS 120B — Advanced</option>
+        <option value="openai/gpt-oss-20b">GPT-OSS 20B — Fast</option>
+      </optgroup>
+      <optgroup label="Meta Llama">
+        <option value="llama-3.3-70b-versatile">Llama 3.3 70B — Versatile</option>
+        <option value="llama-3.1-8b-instant">Llama 3.1 8B — Fast</option>
+      </optgroup>
+    </select>
+    <p class="model-info">You can refresh the list to check which models your API key can access.</p>
+
+    <button class="secondary-btn" id="refreshModels" type="button">↻ Load available models</button>
+
+    <label class="field-label" for="systemPrompt">Assistant instructions (optional)</label>
+    <textarea class="system-prompt" id="systemPrompt" rows="3"
+      maxlength="1500" placeholder="You are a helpful AI assistant..."></textarea>
+
+    <p class="security-note">
+      Security: this GitHub Pages demo sends your key directly from your browser to Groq.
+      Do not use a valuable or shared key on a public site. Anyone who enters a key
+      should understand it can be exposed to browser scripts or extensions.
+      For a public production app, use a server-side backend.
+    </p>
+
+    <div class="modal-buttons">
+      <button class="primary-btn" id="saveSettings" type="button">Save settings</button>
+      <button class="secondary-btn" id="testConnection" type="button">Test API</button>
+      <button class="secondary-btn" id="forgetKey" type="button">Forget key</button>
+    </div>
+    <div class="status-text" id="settingsStatus" role="status"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+
+const API_BASE = "https://api.groq.com/openai/v1";
+const $ = selector => document.querySelector(selector);
+
+const input = $("#messageInput");
+const messagesEl = $("#messages");
+const welcome = $("#welcome");
+const historyEl = $("#history");
+const chatArea = $("#chatArea");
+const sendBtn = $("#sendBtn");
+const settingsModal = $("#settingsModal");
+const settingsStatus = $("#settingsStatus");
+
+let busy = false;
+let currentId = null;
+let chats = [];
+let apiKey = "";
+let selectedModel = "llama-3.3-70b-versatile";
+let systemPrompt = "You are Nexa AI, a helpful assistant. Answer clearly and accurately. Match the user's language and use Markdown when useful.";
+
+const defaultModels = [
+  {id:"openai/gpt-oss-120b",name:"GPT-OSS 120B",group:"GPT-OSS"},
+  {id:"openai/gpt-oss-20b",name:"GPT-OSS 20B",group:"GPT-OSS"},
+  {id:"llama-3.3-70b-versatile",name:"Llama 3.3 70B",group:"Llama"},
+  {id:"llama-3.1-8b-instant",name:"Llama 3.1 8B",group:"Llama"}
+];
+
+function loadLocalSettings() {
+  try {
+    // API key is held in sessionStorage, not committed to source code.
+    apiKey = sessionStorage.getItem("nexa-api-key") || "";
+    selectedModel = localStorage.getItem("nexa-model") || selectedModel;
+    systemPrompt = localStorage.getItem("nexa-prompt") || systemPrompt;
+    if (localStorage.getItem("nexa-theme") === "light") {
+      document.body.classList.add("light");
+    }
+
+    const saved = JSON.parse(localStorage.getItem("nexa-chats") || "[]");
+    if (Array.isArray(saved)) {
+      chats = saved.filter(chat =>
+        chat && typeof chat.id === "string" && Array.isArray(chat.messages)
+      ).slice(0, 30);
+    }
+  } catch (error) {
+    console.warn("Some browser settings could not be loaded.");
+  }
+
+  $("#apiKey").value = apiKey;
+  $("#modelSelect").value = selectedModel;
+  $("#systemPrompt").value = systemPrompt;
+  updateModelBadge();
+}
+
+function saveChats() {
+  try {
+    localStorage.setItem("nexa-chats", JSON.stringify(chats.slice(0,30)));
+  } catch {
+    showStatus("Chat history could not be saved in this browser.");
+  }
+}
+
+function saveSettings() {
+  apiKey = $("#apiKey").value.trim();
+  selectedModel = $("#modelSelect").value;
+  systemPrompt = $("#systemPrompt").value.trim() || 
+    "You are Nexa AI, a helpful assistant. Answer clearly and accurately. Match the user's language and use Markdown when useful.";
+
+  try {
+    if (apiKey) sessionStorage.setItem("nexa-api-key", apiKey);
+    else sessionStorage.removeItem("nexa-api-key");
+
+    localStorage.setItem("nexa-model", selectedModel);
+    localStorage.setItem("nexa-prompt", systemPrompt);
+  } catch {
+    showStatus("Browser storage unavailable. Key will remain in memory for this tab.");
+  }
+
+  updateModelBadge();
+  showStatus("Settings saved for this browser session.");
+}
+
+function updateModelBadge() {
+  const model = [...$("#modelSelect").options].find(o => o.value === selectedModel);
+  $("#activeModelBadge").textContent = model ? model.textContent : selectedModel;
+}
+
+function showStatus(text) {
+  settingsStatus.textContent = text;
+}
+
+function openSettings() {
+  $("#apiKey").value = apiKey;
+  $("#modelSelect").value = selectedModel;
+  $("#systemPrompt").value = systemPrompt;
+  settingsModal.hidden = false;
+  showStatus("");
+}
+
+function closeSettings() {
+  settingsModal.hidden = true;
+}
+
+function getChat() {
+  return chats.find(chat => chat.id === currentId);
+}
+
+function newChat() {
+  if (busy) return;
+  currentId = crypto.randomUUID();
+  chats.unshift({
+    id: currentId,
+    title: "New conversation",
+    messages: [],
+    updatedAt: Date.now()
+  });
+  chats = chats.slice(0,30);
+  saveChats();
+  renderChat();
+  renderHistory();
+  $("#sidebar").classList.remove("open");
+  input.focus();
+}
+
+function renderHistory() {
+  historyEl.replaceChildren();
+
+  chats.forEach(chat => {
+    const button = document.createElement("button");
+    button.className = "history-item" + (chat.id === currentId ? " active" : "");
+    button.textContent = chat.title || "New conversation";
+    button.title = button.textContent;
+    button.addEventListener("click", () => {
+      if (busy) return;
+      currentId = chat.id;
+      renderChat();
+      renderHistory();
+      $("#sidebar").classList.remove("open");
+    });
+    historyEl.append(button);
+  });
+}
+
+function escapeHTML(text) {
+  return text.replace(/[&<>"']/g, ch => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[ch]);
+}
+
+// A small Markdown formatter. Raw HTML is escaped before formatting.
+function renderMarkdown(text) {
+  const blocks = [];
+  let safe = escapeHTML(text);
+
+  safe = safe.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const index = blocks.length;
+    blocks.push("<pre><code>" + code.replace(/\n$/, "") + "</code></pre>");
+    return "%%CODEBLOCK" + index + "%%";
+  });
+
+  safe = safe
+    .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+    .replace(/^### (.+)$/gm, "<strong>$1</strong>")
+    .replace(/^## (.+)$/gm, "<strong>$1</strong>")
+    .replace(/^# (.+)$/gm, "<strong>$1</strong>")
+    .replace(/^\s*[-*] (.+)$/gm, "<li>$1</li>");
+
+  safe = safe.replace(/((?:<li>.*?<\/li>\n?)+)/gs, "<ul>$1</ul>");
+
+  safe = safe.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    (_, label, url) => {
+      // URL originates from escaped model text; allow only HTTP(S).
+      try {
+        const parsed = new URL(url);
+        if (!["http:", "https:"].includes(parsed.protocol)) return label;
+        return '<a href="' + parsed.href + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
+      } catch { return label; }
+    }
+  );
+
+  safe = safe.replace(/\n/g, "<br>");
+  blocks.forEach((block, i) => {
+    safe = safe.replace("%%CODEBLOCK" + i + "%%", block);
+  });
+  return safe;
+}
+
+function addMessage(role, content) {
+  const row = document.createElement("article");
+  row.className = "message " + role;
+
+  const avatar = document.createElement("div");
+  avatar.className = "message-avatar";
+  avatar.textContent = role === "user" ? "Y" : "✦";
+
+  const body = document.createElement("div");
+  body.className = "message-content";
+
+  const name = document.createElement("div");
+  name.className = "message-name";
+  name.textContent = role === "user" ? "You" : "Nexa AI";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+
+  if (role === "assistant") bubble.innerHTML = renderMarkdown(content);
+  else bubble.textContent = content;
+
+  body.append(name, bubble);
+
+  if (role === "assistant") {
+    const actions = document.createElement("div");
+    actions.className = "message-actions";
+    const copy = document.createElement("button");
+    copy.textContent = "Copy response";
+
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(content);
+        copy.textContent = "Copied!";
+        setTimeout(() => copy.textContent = "Copy response", 1200);
+      } catch {
+        copy.textContent = "Copy unavailable";
+      }
+    });
+
+    actions.append(copy);
+    body.append(actions);
+  }
+
+  row.append(avatar, body);
+  messagesEl.append(row);
+}
+
+function renderChat() {
+  messagesEl.replaceChildren();
+  const chat = getChat();
+  welcome.hidden = Boolean(chat && chat.messages.length);
+
+  if (chat) chat.messages.forEach(m => addMessage(m.role, m.content));
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function showTyping() {
+  const row = document.createElement("article");
+  row.className = "message";
+  row.id = "typing";
+
+  const avatar = document.createElement("div");
+  avatar.className = "message-avatar";
+  avatar.textContent = "✦";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble typing";
+  bubble.textContent = "Nexa AI is thinking...";
+
+  row.append(avatar, bubble);
+  messagesEl.append(row);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function updateTitle(chat) {
+  const first = chat.messages.find(m => m.role === "user");
+  if (first && chat.title === "New conversation") {
+    chat.title = first.content.slice(0,32) + (first.content.length > 32 ? "…" : "");
+  }
+  chat.updatedAt = Date.now();
+  chats.sort((a,b) => b.updatedAt - a.updatedAt);
+}
+
+async function sendMessage(raw) {
+  const text = raw.trim();
+  if (!text || busy) return;
+
+  if (!apiKey) {
+    openSettings();
+    showStatus("Enter your Groq API key first.");
+    return;
+  }
+
+  if (!getChat()) {
+    currentId = crypto.randomUUID();
+    chats.unshift({
+      id:currentId,title:"New conversation",messages:[],updatedAt:Date.now()
+    });
+  }
+
+  const chat = getChat();
+  chat.messages.push({role:"user",content:text});
+  updateTitle(chat);
+  saveChats();
+
+  welcome.hidden = true;
+  addMessage("user",text);
+  renderHistory();
+
+  input.value = "";
+  input.style.height = "auto";
+  busy = true;
+  sendBtn.disabled = true;
+  showTyping();
+
+  try {
+    const response = await fetch(API_BASE + "/chat/completions", {
+      method:"POST",
+      headers:{
+        "Authorization":"Bearer " + apiKey,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        model:selectedModel,
+        messages:[
+          {role:"system",content:systemPrompt},
+          ...chat.messages.slice(-20).map(m => ({
+            role:m.role,content:m.content
+          }))
+        ],
+        temperature:0.7,
+        max_completion_tokens:2048
+      })
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const detail = data.error?.message || "HTTP " + response.status;
+      if (response.status === 401) {
+        throw new Error("API key invalid. Check your Groq API key in Settings.");
+      }
+      if (response.status === 429) {
+        throw new Error("Rate limit or usage limit reached. Try again later.");
+      }
+      throw new Error("Groq API: " + detail);
+    }
+
+    const reply = data.choices?.[0]?.message?.content;
+    if (typeof reply !== "string" || !reply.trim()) {
+      throw new Error("No text response received from the selected model.");
+    }
+
+    $("#typing")?.remove();
+    chat.messages.push({role:"assistant",content:reply});
+    updateTitle(chat);
+    saveChats();
+    addMessage("assistant",reply);
+    renderHistory();
+  } catch (error) {
+    $("#typing")?.remove();
+
+    let message = error.message || "Unknown error";
+    if (error instanceof TypeError) {
+      message = "Could not connect to Groq. Check internet access and browser CORS support.";
+    }
+
+    addMessage("assistant","Error: " + message);
+  } finally {
+    busy = false;
+    sendBtn.disabled = false;
+    input.focus();
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+}
+
+async function refreshModels() {
+  const key = $("#apiKey").value.trim();
+  if (!key) {
+    showStatus("Enter your API key before loading models.");
+    return;
+  }
+
+  const button = $("#refreshModels");
+  button.disabled = true;
+  button.textContent = "Loading models...";
+  showStatus("");
+
+  try {
+    const response = await fetch(API_BASE + "/models", {
+      headers:{"Authorization":"Bearer " + key}
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error?.message || "HTTP " + response.status);
+    }
+
+    const available = (data.data || [])
+      .filter(m => m.active !== false && typeof m.id === "string")
+      .filter(m => /chat|instruct|gpt-oss|llama/i.test(m.id));
+
+    const groups = {
+      "OpenAI GPT-OSS": [],
+      "Meta Llama": [],
+      "Other available models": []
+    };
+
+    available.forEach(model => {
+      const id = model.id;
+      if (/gpt-oss/i.test(id)) groups["OpenAI GPT-OSS"].push(model);
+      else if (/llama/i.test(id)) groups["Meta Llama"].push(model);
+      else groups["Other available models"].push(model);
+    });
+
+    const select = $("#modelSelect");
+    select.replaceChildren();
+
+    Object.entries(groups).forEach(([label, models]) => {
+      if (!models.length) return;
+      const group = document.createElement("optgroup");
+      group.label = label;
+
+      models.forEach(model => {
+        const option = document.createElement("option");
+        option.value = model.id;
+        option.textContent = model.id;
+        group.append(option);
+      });
+
+      select.append(group);
+    });
+
+    if (!available.length) {
+      throw new Error("No compatible text models found for this key.");
+    }
+
+    const match = [...select.options].find(o => o.value === selectedModel);
+    if (match) select.value = selectedModel;
+    else select.selectedIndex = 0;
+
+    selectedModel = select.value;
+    updateModelBadge();
+    showStatus("Loaded " + available.length + " available models.");
+  } catch (error) {
+    showStatus("Could not load models: " + error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "↻ Load available models";
+  }
+}
+
+async function testConnection() {
+  const key = $("#apiKey").value.trim();
+  if (!key) {
+    showStatus("Enter your API key first.");
+    return;
+  }
+
+  const button = $("#testConnection");
+  button.disabled = true;
+  showStatus("Testing API connection...");
+
+  try {
+    const response = await fetch(API_BASE + "/models", {
+      headers:{"Authorization":"Bearer " + key}
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || "HTTP " + response.status);
+    }
+
+    showStatus("Connection successful. " + (data.data?.length || 0) + " models returned.");
+  } catch (error) {
+    showStatus("Connection failed: " + error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+$("#chatForm").addEventListener("submit", event => {
+  event.preventDefault();
+  sendMessage(input.value);
+});
+
+input.addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    $("#chatForm").requestSubmit();
+  }
+});
+
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight,150) + "px";
+});
+
+$("#newChat").addEventListener("click", newChat);
+$("#settingsBtn").addEventListener("click", openSettings);
+$("#closeSettings").addEventListener("click", closeSettings);
+$("#saveSettings").addEventListener("click", () => {
+  saveSettings();
+  closeSettings();
+});
+$("#testConnection").addEventListener("click", testConnection);
+$("#refreshModels").addEventListener("click", refreshModels);
+
+$("#toggleKey").addEventListener("click", () => {
+  const field = $("#apiKey");
+  const show = field.type === "password";
+  field.type = show ? "text" : "password";
+  $("#toggleKey").textContent = show ? "Hide" : "Show";
+});
+
+$("#forgetKey").addEventListener("click", () => {
+  apiKey = "";
+  $("#apiKey").value = "";
+  try { sessionStorage.removeItem("nexa-api-key"); } catch {}
+  showStatus("API key removed from this tab's session storage.");
+});
+
+$("#clearChats").addEventListener("click", () => {
+  if (busy) return;
+  if (!confirm("Delete all saved conversations from this browser?")) return;
+  chats = [];
+  currentId = null;
+  saveChats();
+  renderChat();
+  renderHistory();
+});
+
+$("#themeBtn").addEventListener("click", () => {
+  document.body.classList.toggle("light");
+  try {
+    localStorage.setItem("nexa-theme",
+      document.body.classList.contains("light") ? "light" : "dark");
+  } catch {}
+});
+
+$("#menuBtn").addEventListener("click", () => {
+  $("#sidebar").classList.toggle("open");
+});
+
+document.querySelectorAll(".suggestion").forEach(button => {
+  button.addEventListener("click", () => sendMessage(button.dataset.prompt));
+});
+
+settingsModal.addEventListener("click", event => {
+  if (event.target === settingsModal) closeSettings();
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeSettings();
+});
+
+loadLocalSettings();
+
+if (chats.length) currentId = chats[0].id;
+renderChat();
+renderHistory();
+</script>
+</body>
+</html>
